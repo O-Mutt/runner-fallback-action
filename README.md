@@ -14,6 +14,31 @@ Use it to:
 - Burst onto GitHub-hosted runners when your self-hosted pool is saturated
 - Avoid hard-coding `runs-on: ubuntu-latest` everywhere when you _sometimes_ have faster self-hosted hardware
 
+## Prerequisites
+
+Before this action will do anything useful you need:
+
+1. **At least one self-hosted runner** registered to the repository, organization, or enterprise you want to query. Empty runner pools always resolve to the fallback runner.
+2. **A token with admin permission** for that level — `GITHUB_TOKEN` does **not** have the scopes required to list runners. See [Permissions](#permissions) for the exact scope per level.
+3. **The token stored as an Actions secret** (repository or organization). The workflow refers to it via `${{ secrets.<SECRET_NAME> }}`.
+
+## Setup
+
+A first-time setup, end to end:
+
+1. **Create the token.**
+   - For an organization: GitHub → your organization → _Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token_, and select the `admin:org` scope.
+   - For an enterprise: same flow at the enterprise level, with the `manage_runners:enterprise` scope.
+   - For a single repository: a classic PAT with `repo` scope, or a fine-grained PAT with `Administration: Read` on that repo.
+   - Copy the token immediately — GitHub will not show it again.
+2. **Save the token as an Actions secret.**
+   - Repository: _Settings → Secrets and variables → Actions → New repository secret._
+   - Organization: _Org Settings → Secrets and variables → Actions → New organization secret._
+   - Name it something like `RUNNER_API_TOKEN`. Note that **Actions** secrets are stored separately from **Dependabot** and **Codespaces** secrets.
+3. **Decide your scope.** Add `organization:` or `enterprise:` to the action inputs if you want to query at that level. If you omit both, the action queries runners attached to the workflow's own repository.
+4. **Add the action to your workflow.** Paste the [Quick start](#quick-start) snippet, replacing `primary-runner`, `fallback-runner`, and the secret name with your values.
+5. **Consume the output.** Any downstream job that needs to run on the selected runner uses `runs-on: ${{ fromJson(needs.<job>.outputs.<output>) }}`. The `fromJson` wrapper is required — the action emits a JSON-encoded array so multi-label runners (`["self-hosted","linux"]`) round-trip safely.
+
 ## Quick start
 
 ```yaml
@@ -130,6 +155,17 @@ Real-world references:
 
 - [`ankidroid/Anki-Android-Backend` — build-release.yml](https://github.com/ankidroid/Anki-Android-Backend/blob/main/.github/workflows/build-release.yml)
 - [`ankidroid/Anki-Android-Backend` — build-quick.yml](https://github.com/ankidroid/Anki-Android-Backend/blob/main/.github/workflows/build-quick.yml) (consumes the output in a dynamic matrix)
+
+## Troubleshooting
+
+| Symptom                                                         | Likely cause                                                                           | Fix                                                                                                                             |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `Input required and not supplied: github-token`                 | The referenced secret is empty or misspelled, or it lives in a different secret store. | Confirm the secret name. Remember Actions and Dependabot secrets are separate stores.                                           |
+| `Failed to get runners. Status code: 401`                       | Token lacks the right scope for the level being queried.                               | Recreate the token with the scope shown in [Permissions](#permissions); make sure you used the level matching the action input. |
+| `Failed to get runners. Status code: 404`                       | Wrong `organization` or `enterprise` slug, or the token cannot see that resource.      | Re-check spelling. For enterprise runners use the enterprise slug, not the display name. Verify the token owner has access.     |
+| Job picks the fallback even though primaries appear online      | `primaries-required` is set higher than the number of non-busy primaries.              | Lower `primaries-required` or scale the primary pool. Drop the input entirely to accept any online primary (busy included).     |
+| Downstream job fails with `runs-on: ${{ needs… }}` parse errors | Forgot the `fromJson(...)` wrapper, or the upstream job's output name is misspelled.   | Wrap the output: `runs-on: ${{ fromJson(needs.<job>.outputs.<name>) }}`. Verify the upstream job declared `outputs:` correctly. |
+| Workflow occasionally picks the wrong runner under bursty load  | Multiple workflows asking the question in parallel race each other.                    | Serialize the selection job with a `concurrency:` block, as shown in the [Full example](#full-example).                         |
 
 ## Versioning
 
