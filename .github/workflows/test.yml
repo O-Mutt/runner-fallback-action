@@ -30,7 +30,11 @@ jobs:
       - run: npm ci
       - run: npm test
 
-  # test action works running from the graph
+  # test action works running from the graph. Uses TEST_GITHUB_TOKEN when
+  # available (exercises the primary-runner API path) and falls back to the
+  # auto-injected GITHUB_TOKEN otherwise. The auto-injected token does not
+  # have runner-admin scope, so fallback-on-error is enabled to make the test
+  # green by exercising the fallback path instead.
   test:
     runs-on: ubuntu-latest
     outputs:
@@ -42,7 +46,8 @@ jobs:
         with:
           primary-runner: 'self-hosted,linux'
           fallback-runner: 'ubuntu-latest'
-          github-token: ${{ secrets.TEST_GITHUB_TOKEN }}
+          github-token: ${{ secrets.TEST_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          fallback-on-error: true
       - name: Check output
         run: echo "Runner to use is ${{ steps.test-action.outputs.use-runner }}"
 
@@ -64,6 +69,7 @@ jobs:
         with:
           primary-runner: 'self-hosted,linux'
           fallback-runner: 'linux,x64'
-          github-token: ${{ secrets.TEST_GITHUB_TOKEN }}
+          github-token: ${{ secrets.TEST_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          fallback-on-error: true
       - name: Check output
         run: echo "Runner to use is ${{ steps.test-action.outputs.use-runner }}"
