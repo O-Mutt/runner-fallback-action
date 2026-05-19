@@ -20,10 +20,10 @@ Note: In order to support an array of labels for the `runs-on` field, the output
 
 #### Required
 
-|       Name        |                                          Description                                                       |
+| Name              | Description                                                                                                |
 | ----------------- | ---------------------------------------------------------------------------------------------------------- |
-|  `github-token`   | A token that can access the `list action runners` for the given context (e.g. user repo, org, enterprise). |
-|  `primary-runner` | A comma separated list of labels for the _primary_ runner (e.g. 'self-hosted,linux').                      |
+| `github-token`    | A token that can access the `list action runners` for the given context (e.g. user repo, org, enterprise). |
+| `primary-runner`  | A comma separated list of labels for the _primary_ runner (e.g. 'self-hosted,linux').                      |
 | `fallback-runner` | A comma separated list of labels for the _fallback_ runner (e.g. 'self-hosted,linux').                     |
 
 #### Optional
@@ -32,16 +32,16 @@ Note: In order to support an array of labels for the `runs-on` field, the output
 
 There are three ways runners can be allowed to run against a repo: User, Organization, Enterprise. The following options allow you to switch the implementation to use one of the other specified levels. **_Note:_** You can only provide one of the values.
 
-|       Name       |                     Description                                    |
-| ---------------- | ------------------------------------------------------------------ |
-| `organization`   | The name of the github organization (e.g. `My-Github-Org`)         |
-| `enterprise`     | The name of the github enterprise (e.g. `My-Github-Ent`)           |
+| Name           | Description                                                |
+| -------------- | ---------------------------------------------------------- |
+| `organization` | The name of the github organization (e.g. `My-Github-Org`) |
+| `enterprise`   | The name of the github enterprise (e.g. `My-Github-Ent`)   |
 
 It is possible that you want to use the fallback runners even if the primary runners are online,
 if the primary runners are busy. You may optionally configure this action to fallback if there
 are not enough free primaries, for example if you are adding self-hosted primaries to increase capacity, but the fallbacks are public runners in a public repo so you don't mind using them as needed.
 
-|       Name           |                     Description                 |
+| Name                 | Description                                     |
 | -------------------- | ----------------------------------------------- |
 | `primaries-required` | minimum non-busy primaries count, else fallback |
 
@@ -49,7 +49,7 @@ You may want the action to use the fallback runner, if correctly configured, if 
 errors at all. This makes it so the action won't block CI runs even if (for example) the
 github token is unavailable or expires. Default is false.
 
-|       Name          |                     Description                 |
+| Name                | Description                                     |
 | ------------------- | ----------------------------------------------- |
 | `fallback-on-error` | use the fallback runner if there are any errors |
 
@@ -77,11 +77,11 @@ jobs:
         id: set-runner
         uses: mikehardy/runner-fallback-action@v1
         with:
-          organization: "ankidroid"
+          organization: 'ankidroid'
           # list of tags a runner must match to be considered a primary
-          primary-runner: "macos-selfhosted"
+          primary-runner: 'macos-selfhosted'
           # a single tag that will select a runner to fallback to
-          fallback-runner: "macos-26"
+          fallback-runner: 'macos-26'
           # optional, fallback if fewer available, big batch jobs or multiple workflows perhaps
           primaries-required: 1
           # optional, fallback if token expires or github API fails
