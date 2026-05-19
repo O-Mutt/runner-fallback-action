@@ -1,0 +1,39 @@
+name: release-please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          config-file: .release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      # Marketplace consumers pin to `@v2`, so after release-please creates
+      # the immutable `vX.Y.Z` tag we re-point the floating major tag to
+      # match. Only runs when a release was actually cut on this push.
+      - if: ${{ steps.release.outputs.release_created }}
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - if: ${{ steps.release.outputs.release_created }}
+        name: Move floating major tag for Marketplace consumers
+        env:
+          TAG_NAME: ${{ steps.release.outputs.tag_name }}
+          MAJOR: v${{ steps.release.outputs.major }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -fa "$MAJOR" -m "Update $MAJOR -> $TAG_NAME" "$TAG_NAME"
+          git push origin "$MAJOR" --force
