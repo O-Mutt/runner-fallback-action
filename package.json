@@ -1,6 +1,6 @@
 {
   "name": "runner-fallback-action",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "description": "Github Runner Fallback Action",
   "main": "index.js",
   "scripts": {
