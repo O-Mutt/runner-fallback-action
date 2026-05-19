@@ -5,6 +5,12 @@ node_modules/
 .idea/
 *.iml
 
+# Local Claude Code tooling — do not commit
+.claude/
+.claude-flow/
+.mcp.json
+CLAUDE.md
+
 # Logs
 logs
 *.log
