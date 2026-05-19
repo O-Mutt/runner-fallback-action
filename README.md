@@ -2,7 +2,10 @@
 
 <p align="center">
   <a href="https://github.com/O-Mutt/runner-fallback-action/actions/workflows/ci.yml"><img alt="CI status" src="https://github.com/O-Mutt/runner-fallback-action/actions/workflows/ci.yml/badge.svg"></a>
-  <a href="https://github.com/marketplace/actions/self-hosted-runner-fallback"><img alt="Marketplace" src="https://img.shields.io/badge/Marketplace-Self--Hosted%20Runner%20Fallback-blue?logo=github"></a>
+  <a href="https://github.com/O-Mutt/runner-fallback-action/actions/workflows/codeql-analysis.yml"><img alt="CodeQL status" src="https://github.com/O-Mutt/runner-fallback-action/actions/workflows/codeql-analysis.yml/badge.svg"></a>
+  <a href="https://github.com/marketplace/actions/self-hosted-runner-fallback"><img alt="Marketplace version" src="https://img.shields.io/github/v/release/O-Mutt/runner-fallback-action?label=Marketplace&logo=github&color=blue"></a>
+  <a href="https://snyk.io/test/github/O-Mutt/runner-fallback-action"><img alt="Known vulnerabilities" src="https://img.shields.io/snyk/vulnerabilities/github/O-Mutt/runner-fallback-action"></a>
+  <a href="https://github.com/O-Mutt/runner-fallback-action/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/O-Mutt/runner-fallback-action?color=green"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green"></a>
 </p>
 
