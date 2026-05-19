@@ -4,8 +4,12 @@ require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /***/ 6136:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
+/* module decorator */ module = __nccwpck_require__.nmd(module);
 const core = __nccwpck_require__(7484);
 const httpClient = __nccwpck_require__(4844);
+
+const HTTP_TIMEOUT_MS = 10_000;
+const GITHUB_API_VERSION = '2022-11-28';
 
 async function checkRunner({
   token,
@@ -14,9 +18,13 @@ async function checkRunner({
   primariesRequired,
   apiPath,
 }) {
-  const http = new httpClient.HttpClient("http-client");
+  const http = new httpClient.HttpClient('http-client', [], {
+    socketTimeout: HTTP_TIMEOUT_MS,
+  });
   const headers = {
     Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': GITHUB_API_VERSION,
   };
 
   const response = await http.getJson(
@@ -35,54 +43,81 @@ async function checkRunner({
   let primaryIsOnline = false;
   let sufficientPrimaries = false;
   let primariesAvailableCount = 0;
+  const requirePrimaries =
+    typeof primariesRequired === 'number' && primariesRequired > 0;
 
   for (const runner of runners) {
-    if (runner.status === "online") {
-      const runnerLabels = runner.labels.map((label) => label.name);
-      if (primaryRunnerLabels.every((label) => runnerLabels.includes(label))) {
-        primaryIsOnline = true;
+    if (runner.status !== 'online') continue;
 
-        // Is the number of primaries important? If so, keep track of them
-        if (primariesRequired !== undefined) {
-          // if we need more primaries and this one is busy, keep looking
-          if (runner.busy === true) {
-           continue;
-          }
-
-          // if we still do not have enough primaries, keep looking
-          primariesAvailableCount++;
-          if (primariesAvailableCount < primariesRequired) {
-            continue;
-          }
-        }
-
-        sufficientPrimaries = true;
-        useRunner = primaryRunnerLabels.join(",");
-        break;
-      }
+    const runnerLabels = runner.labels.map((label) => label.name);
+    if (!primaryRunnerLabels.every((label) => runnerLabels.includes(label))) {
+      continue;
     }
+
+    primaryIsOnline = true;
+
+    if (requirePrimaries) {
+      if (runner.busy === true) continue;
+      primariesAvailableCount++;
+      if (primariesAvailableCount < primariesRequired) continue;
+    }
+
+    sufficientPrimaries = true;
+    useRunner = primaryRunnerLabels.join(',');
+    break;
   }
 
-  // return a JSON string so that it can be parsed using `fromJson`, e.g. fromJson('["self-hosted", "linux"]')
-  return { useRunner: JSON.stringify(useRunner.split(",")), primaryIsOnline, sufficientPrimaries };
+  // return a JSON string so it can be parsed using `fromJson`, e.g. fromJson('["self-hosted","linux"]')
+  return {
+    useRunner: JSON.stringify(useRunner.split(',')),
+    primaryIsOnline,
+    sufficientPrimaries,
+  };
+}
+
+function parsePrimariesRequired(input) {
+  if (input === undefined || input === null || input === '') return undefined;
+  if (typeof input === 'number') {
+    return Number.isFinite(input) && input > 0 ? input : undefined;
+  }
+  const n = parseInt(input, 10);
+  return Number.isFinite(n) && n > 0 ? n : undefined;
+}
+
+function resolveApiPath({ organization, enterprise, owner, repo }) {
+  if (organization && enterprise) {
+    throw new Error(
+      'You cannot specify both organization and enterprise inputs. Please choose one.'
+    );
+  }
+  if (organization) return `orgs/${organization}/actions/runners`;
+  if (enterprise) return `enterprises/${enterprise}/actions/runners`;
+  return `repos/${owner}/${repo}/actions/runners`;
+}
+
+async function reportFallback(fallbackRunner, reason) {
+  core.warning(
+    'Checking for available runners failed, but fallback-on-error is true'
+  );
+  core.warning(`Original error: ${reason}`);
+  core.warning(`using runner: ${fallbackRunner}`);
+  core.summary.addRaw(
+    `Selected runner ${fallbackRunner}. Check log for details.`
+  );
+  await core.summary.write();
+  core.setOutput('use-runner', JSON.stringify([fallbackRunner]));
 }
 
 async function main() {
   const githubRepository = process.env.GITHUB_REPOSITORY;
   const organization = core.getInput('organization', { required: false });
   const enterprise = core.getInput('enterprise', { required: false });
-  const [owner, repo] = githubRepository.split("/");
-  if (organization && enterprise) {
-    throw new Error('You cannot specify both organization and enterprise inputs. Please choose one.');
-  }
-  let apiPath = `repos/${owner}/${repo}/actions/runners`;
-  if (organization) {
-    apiPath = `orgs/${organization}/actions/runners`;
-  } else if (enterprise) {
-    apiPath = `enterprises/${enterprise}/actions/runners`;
-  }
+  const [owner, repo] = githubRepository.split('/');
+  const apiPath = resolveApiPath({ organization, enterprise, owner, repo });
 
-  const fallbackOnError = core.getBooleanInput('fallback-on-error', { required: false });
+  const fallbackOnError = core.getBooleanInput('fallback-on-error', {
+    required: false,
+  });
   let fallbackRunner;
 
   try {
@@ -91,51 +126,45 @@ async function main() {
     const inputs = {
       apiPath,
       token: core.getInput('github-token', { required: true }),
-      primaryRunnerLabels: core.getInput('primary-runner', { required: true }).split(','),
+      primaryRunnerLabels: core
+        .getInput('primary-runner', { required: true })
+        .split(','),
       fallbackRunner,
-      primariesRequired: core.getInput('primaries-required', { required: false }),
+      primariesRequired: parsePrimariesRequired(
+        core.getInput('primaries-required', { required: false })
+      ),
     };
 
-    const { useRunner, primaryIsOnline, sufficientPrimaries, error } = await checkRunner(inputs);
+    const { useRunner, primaryIsOnline, sufficientPrimaries, error } =
+      await checkRunner(inputs);
 
     if (error) {
-      if (fallbackOnError !== true) {
+      if (!fallbackOnError) {
         core.setFailed(error);
         return;
-      } else {
-        core.warning('Checking for available runners failed, but fallback-on-error is true');
-        core.warning(`Original error: ${error}`);
-        core.warning(`using runner: ${fallbackRunner}`);
-        core.summary.addRaw(`Selected runner ${fallbackRunner}. Check log for details.`);
-        core.summary.write();
-        core.setOutput('use-runner', [fallbackRunner] );
-        return;
       }
+      await reportFallback(fallbackRunner, error);
+      return;
     }
 
     core.info(`Primary runner is online: ${primaryIsOnline}`);
     core.info(`Sufficient primary runners available: ${sufficientPrimaries}`);
     core.info(`Using runner: ${useRunner}`);
     core.summary.addRaw(`Selected runner ${useRunner}. Check log for details.`);
-    core.summary.write();
+    await core.summary.write();
     core.setOutput('use-runner', useRunner);
   } catch (error) {
-    if (fallbackRunner === undefined || fallbackOnError !== true) {
+    if (fallbackRunner === undefined || !fallbackOnError) {
       core.setFailed(error);
     } else {
-      core.warning('Checking for available runners failed, but fallback-on-error is true');
-      core.warning(`Original error: ${error}`);
-      core.warning(`using runner: ${fallbackRunner}`);
-      core.summary.addRaw(`Selected runner ${fallbackRunner}. Check log for details.`);
-      core.summary.write();
-      core.setOutput('use-runner', [fallbackRunner]);
+      await reportFallback(fallbackRunner, error);
     }
   }
 }
 
-module.exports = { checkRunner };
+module.exports = { checkRunner, parsePrimariesRequired, resolveApiPath };
 
-if (require.main === require.cache[eval('__filename')]) {
+if (__nccwpck_require__.c[__nccwpck_require__.s] === module) {
   main();
 }
 
@@ -28505,8 +28534,8 @@ module.exports = parseParams
 /******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = __webpack_module_cache__[moduleId] = {
-/******/ 			// no module.id needed
-/******/ 			// no module.loaded needed
+/******/ 			id: moduleId,
+/******/ 			loaded: false,
 /******/ 			exports: {}
 /******/ 		};
 /******/ 	
@@ -28519,21 +28548,36 @@ module.exports = parseParams
 /******/ 			if(threw) delete __webpack_module_cache__[moduleId];
 /******/ 		}
 /******/ 	
+/******/ 		// Flag the module as loaded
+/******/ 		module.loaded = true;
+/******/ 	
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
 /******/ 	
+/******/ 	// expose the module cache
+/******/ 	__nccwpck_require__.c = __webpack_module_cache__;
+/******/ 	
 /************************************************************************/
+/******/ 	/* webpack/runtime/node module decorator */
+/******/ 	(() => {
+/******/ 		__nccwpck_require__.nmd = (module) => {
+/******/ 			module.paths = [];
+/******/ 			if (!module.children) module.children = [];
+/******/ 			return module;
+/******/ 		};
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/compat */
 /******/ 	
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
 /******/ 	
+/******/ 	// module cache are used so entry inlining is disabled
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
-/******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(6136);
+/******/ 	var __webpack_exports__ = __nccwpck_require__(__nccwpck_require__.s = 6136);
 /******/ 	module.exports = __webpack_exports__;
 /******/ 	
 /******/ })()
