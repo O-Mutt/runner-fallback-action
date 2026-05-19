@@ -24,7 +24,7 @@ jobs:
       - run: npm run lint
       - run: npm run format:check
 
-  # unit tests
+  # unit tests + coverage upload
   units:
     runs-on: ubuntu-latest
     steps:
@@ -33,7 +33,14 @@ jobs:
         with:
           node-version-file: '.nvmrc'
       - run: npm ci
-      - run: npm test
+      - run: npm run test:coverage
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage/lcov.info
+          flags: unit
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   # test action works running from the graph. Uses TEST_GITHUB_TOKEN when
   # available (exercises the primary-runner API path) and falls back to the

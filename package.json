@@ -9,7 +9,26 @@
     "format:check": "prettier --check .",
     "prepare": "ncc build index.js -o dist --source-map --license licenses.txt",
     "test": "jest",
+    "test:coverage": "jest --coverage",
     "all": "npm run lint && npm run format:check && npm run prepare && npm run test"
+  },
+  "jest": {
+    "collectCoverageFrom": [
+      "index.js"
+    ],
+    "coverageReporters": [
+      "text-summary",
+      "lcov",
+      "json-summary"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 75,
+        "functions": 70,
+        "lines": 50,
+        "statements": 55
+      }
+    }
   },
   "repository": {
     "type": "git",
