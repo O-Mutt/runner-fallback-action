@@ -1,7 +1,7 @@
 # Self-Hosted Runner Fallback Action
 
 <p align="center">
-  <a href="https://github.com/O-Mutt/runner-fallback-action/actions/workflows/test.yml"><img alt="units-test status" src="https://github.com/O-Mutt/runner-fallback-action/actions/workflows/test.yml/badge.svg"></a>
+  <a href="https://github.com/O-Mutt/runner-fallback-action/actions/workflows/ci.yml"><img alt="CI status" src="https://github.com/O-Mutt/runner-fallback-action/actions/workflows/ci.yml/badge.svg"></a>
   <a href="https://github.com/marketplace/actions/self-hosted-runner-fallback"><img alt="Marketplace" src="https://img.shields.io/badge/Marketplace-Self--Hosted%20Runner%20Fallback-blue?logo=github"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green"></a>
 </p>

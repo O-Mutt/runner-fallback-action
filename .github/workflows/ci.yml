@@ -1,10 +1,15 @@
-name: 'units-test'
+name: CI
 on:
   pull_request:
   push:
     branches:
       - main
       - 'releases/*'
+
+# Cancel superseded runs on the same PR; full runs still happen on each push to main.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # lint + format check
