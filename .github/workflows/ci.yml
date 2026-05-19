@@ -1,0 +1,87 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'releases/*'
+
+# Cancel superseded runs on the same PR; full runs still happen on each push to main.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # lint + format check
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+
+  # unit tests + coverage upload
+  units:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+      - run: npm ci
+      - run: npm run test:coverage
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage/lcov.info
+          flags: unit
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  # test action works running from the graph. Uses TEST_GITHUB_TOKEN when
+  # available (exercises the primary-runner API path) and falls back to the
+  # auto-injected GITHUB_TOKEN otherwise. The auto-injected token does not
+  # have runner-admin scope, so fallback-on-error is enabled to make the test
+  # green by exercising the fallback path instead.
+  test:
+    runs-on: ubuntu-latest
+    outputs:
+      use-runner: ${{ steps.test-action.outputs.use-runner }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: test-action
+        uses: ./
+        with:
+          primary-runner: 'self-hosted,linux'
+          fallback-runner: 'ubuntu-latest'
+          github-token: ${{ secrets.TEST_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          fallback-on-error: true
+      - name: Check output
+        run: echo "Runner to use is ${{ steps.test-action.outputs.use-runner }}"
+
+  test-output:
+    needs: test
+    runs-on: ${{ fromJson(needs.test.outputs.use-runner )}}
+    steps:
+      - name: Do something
+        run: echo "Doing something on ${{ needs.test.outputs.use-runner }}"
+
+  test-multiple-labels:
+    runs-on: ubuntu-latest
+    outputs:
+      use-runner: ${{ steps.test-action.outputs.use-runner }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: test-action
+        uses: ./
+        with:
+          primary-runner: 'self-hosted,linux'
+          fallback-runner: 'linux,x64'
+          github-token: ${{ secrets.TEST_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          fallback-on-error: true
+      - name: Check output
+        run: echo "Runner to use is ${{ steps.test-action.outputs.use-runner }}"

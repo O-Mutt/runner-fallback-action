@@ -1,0 +1,11 @@
+dist/
+node_modules/
+coverage/
+package-lock.json
+.claude/
+.claude-flow/
+.nvmrc
+LICENSE
+CODEOWNERS
+.gitattributes
+.gitignore

@@ -1,12 +1,12 @@
-name: 'Runner Availability Checker'
-description: 'Check for availability of self-hosted GitHub runners and fallback to GitHub-hosted runners if needed'
-author: '@jimmygchen'
+name: 'Self-Hosted Runner Fallback'
+description: 'Check whether self-hosted GitHub runners are online and not busy, and fall back to a GitHub-hosted runner when they are not.'
+author: "Matt O'Keefe (@O-Mutt)"
 branding:
   icon: activity
   color: blue
 inputs:
   github-token:
-    description: 'GitHub token with repo and actions scope for querying runner information'
+    description: 'Token with permission to list runners at the chosen scope: classic PAT with repo for user repos, admin:org for organizations, or manage_runners:enterprise for enterprises. The default GITHUB_TOKEN does not have these scopes.'
     required: true
   primary-runner:
     description: 'Comma-separated list of labels for the primary runner, e.g. self-hosted,linux'
@@ -29,7 +29,7 @@ inputs:
     default: false
 outputs:
   use-runner:
-    description: 'The runner to use, either the primary or the fallback runner, based on availability'
+    description: 'JSON-encoded array of runner labels to use. Parse with fromJson(...) when assigning to runs-on. Example: ["self-hosted","linux"] or ["ubuntu-latest"].'
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'dist/index.js'

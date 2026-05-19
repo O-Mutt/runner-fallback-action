@@ -1,0 +1,22 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "package-name": "runner-fallback-action",
+      "bootstrap-sha": "dc7732f9e532c451b2527b288ba8d58fd4b0a4ca",
+      "release-as": "2.0.0",
+      "include-v-in-tag": true,
+      "changelog-sections": [
+        { "type": "feat", "section": "Features" },
+        { "type": "fix", "section": "Bug Fixes" },
+        { "type": "perf", "section": "Performance" },
+        { "type": "refactor", "section": "Refactor" },
+        { "type": "docs", "section": "Documentation" },
+        { "type": "build", "section": "Build" },
+        { "type": "ci", "section": "Continuous Integration" },
+        { "type": "chore", "section": "Miscellaneous", "hidden": false }
+      ]
+    }
+  }
+}

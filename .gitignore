@@ -5,6 +5,12 @@ node_modules/
 .idea/
 *.iml
 
+# Local Claude Code tooling — do not commit
+.claude/
+.claude-flow/
+.mcp.json
+CLAUDE.md
+
 # Logs
 logs
 *.log
@@ -23,6 +29,7 @@ lib-cov
 
 # Coverage directory used by tools like istanbul
 coverage
+coverage/
 
 # nyc test coverage
 .nyc_output
