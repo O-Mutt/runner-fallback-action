@@ -1,4 +1,4 @@
-name: "units-test"
+name: 'units-test'
 on:
   pull_request:
   push:
@@ -7,13 +7,28 @@ on:
       - 'releases/*'
 
 jobs:
+  # lint + format check
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+
   # unit tests
   units:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - run: npm ci
-    - run: npm test
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+      - run: npm ci
+      - run: npm test
 
   # test action works running from the graph
   test:
@@ -21,15 +36,15 @@ jobs:
     outputs:
       use-runner: ${{ steps.test-action.outputs.use-runner }}
     steps:
-    - uses: actions/checkout@v4
-    - id: test-action
-      uses: ./
-      with:
-        primary-runner: 'self-hosted,linux'
-        fallback-runner: 'ubuntu-latest'
-        github-token: ${{ secrets.TEST_GITHUB_TOKEN }}
-    - name: Check output
-      run: echo "Runner to use is ${{ steps.test-action.outputs.use-runner }}"        
+      - uses: actions/checkout@v6
+      - id: test-action
+        uses: ./
+        with:
+          primary-runner: 'self-hosted,linux'
+          fallback-runner: 'ubuntu-latest'
+          github-token: ${{ secrets.TEST_GITHUB_TOKEN }}
+      - name: Check output
+        run: echo "Runner to use is ${{ steps.test-action.outputs.use-runner }}"
 
   test-output:
     needs: test
@@ -43,12 +58,12 @@ jobs:
     outputs:
       use-runner: ${{ steps.test-action.outputs.use-runner }}
     steps:
-    - uses: actions/checkout@v4
-    - id: test-action
-      uses: ./
-      with:
-        primary-runner: 'self-hosted,linux'
-        fallback-runner: 'linux,x64'
-        github-token: ${{ secrets.TEST_GITHUB_TOKEN }}
-    - name: Check output
-      run: echo "Runner to use is ${{ steps.test-action.outputs.use-runner }}"        
+      - uses: actions/checkout@v6
+      - id: test-action
+        uses: ./
+        with:
+          primary-runner: 'self-hosted,linux'
+          fallback-runner: 'linux,x64'
+          github-token: ${{ secrets.TEST_GITHUB_TOKEN }}
+      - name: Check output
+        run: echo "Runner to use is ${{ steps.test-action.outputs.use-runner }}"
