@@ -31,5 +31,5 @@ outputs:
   use-runner:
     description: 'The runner to use, either the primary or the fallback runner, based on availability'
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'dist/index.js'
