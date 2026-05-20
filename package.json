@@ -39,8 +39,13 @@
     "Actions",
     "Runner"
   ],
-  "author": "Mike Hardy <github@mikehardy.net> (https://github.com/mikehardy)",
+  "author": "Matt O'Keefe <matt+github@okeefe.dev>",
   "contributors": [
+    {
+      "name": "Mike Hardy",
+      "email": "github@mikehardy.net",
+      "url": "https://github.com/mikehardy"
+    },
     {
       "name": "Jimmy Chen",
       "email": "jchen.tc@gmail.com",
