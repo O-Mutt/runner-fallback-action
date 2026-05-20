@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.0](https://github.com/O-Mutt/runner-fallback-action/compare/runner-fallback-action-v2.0.0...runner-fallback-action-v2.0.0) (2026-05-20)
+
+
+### Miscellaneous
+
+* set Matt O'Keefe as author, move Mike Hardy to contributors ([07b67c1](https://github.com/O-Mutt/runner-fallback-action/commit/07b67c1deaf3d980853669c82ae50a2fac345e1a))
+
 ## [2.0.0](https://github.com/O-Mutt/runner-fallback-action/compare/runner-fallback-action-v1.0.2...runner-fallback-action-v2.0.0) (2026-05-19)
 
 
